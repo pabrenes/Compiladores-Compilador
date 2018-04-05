@@ -32,19 +32,9 @@ void token::asignarCodigoError(int _codigoError) {
     codigoError = _codigoError;
 }
 
-void token::aumentarColumnaInicio() {
-    columnaInicio++;
-}
-
 void token::aumentarFilaInicio() {
     fila++;
     columnaInicio = 1;
-}
-
-void token::convertirEOF() {
-    columnaFin = columnaInicio;
-    codigoFamilia = 159;
-    lexema = "EOF";
 }
 
 void token::imprimirToken() {

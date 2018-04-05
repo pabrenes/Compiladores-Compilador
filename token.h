@@ -20,9 +20,7 @@ struct token {
     void asignarLexema(std::string _lexema);
     void asignarColumnaFin(int _columnaFin);
     void asignarCodigoError(int _codigoError);
-    void aumentarColumnaInicio();
     void aumentarFilaInicio();
-    void convertirEOF();
     void imprimirToken();
 
 };
