@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "MuroLadrillos.h"
 
 using namespace std;
 
@@ -9,11 +10,18 @@ int main(int argc, char* argv[]) {
 
     iniciarScanner(argv[posicionNombreArchivo]);
 
+    MuroLadrillos murito;
+
+
+
     token portaTokens = demeToken();
+
     while (portaTokens.codigoFamilia != 159){
-        portaTokens.imprimirToken();
+        murito.agregarLineaHTML(portaTokens);
         portaTokens = demeToken();
     }
+
+    murito.escribirHTML("pixa.html");
 
     finalizarScanner();
 
