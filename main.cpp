@@ -9,8 +9,10 @@ int main(int argc, char* argv[]) {
 
     iniciarScanner(argv[posicionNombreArchivo]);
 
-    for (int i = 0; i < 50; ++i) {
-        demeToken().imprimirToken();
+    token portaTokens = demeToken();
+    while (portaTokens.codigoFamilia != 159){
+        portaTokens.imprimirToken();
+        portaTokens = demeToken();
     }
 
     finalizarScanner();
