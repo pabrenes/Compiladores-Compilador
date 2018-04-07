@@ -250,20 +250,17 @@ private:
                                    "white",
                                    "black",
                                    "black"};
-    std::string buffer;
+    std::ofstream archivoHTML;
 public:
-    const std::string *getVectorColores() const;
-
-    const std::string &getBuffer() const;
-
-    void setBuffer(const std::string &buffer);
 
 public:
     MuroLadrillos();
 
+    void iniciarHTML(std::string nombreArchivo);
+
     void agregarLineaHTML(token tokenActual);
 
-    void escribirHTML(std::string nombreArchivo);
+    void cerrarHTML();
 };
 
 

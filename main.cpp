@@ -10,18 +10,19 @@ int main(int argc, char* argv[]) {
 
     iniciarScanner(argv[posicionNombreArchivo]);
 
-    MuroLadrillos murito;
+    //MuroLadrillos murito;
 
-
+    //murito.iniciarHTML("MuroLadrillos.html");
 
     token portaTokens = demeToken();
 
     while (portaTokens.codigoFamilia != 159){
-        murito.agregarLineaHTML(portaTokens);
+        //murito.agregarLineaHTML(portaTokens);
+        portaTokens.imprimirToken();
         portaTokens = demeToken();
     }
 
-    murito.escribirHTML("pixa.html");
+    //murito.cerrarHTML();
 
     finalizarScanner();
 

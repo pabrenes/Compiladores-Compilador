@@ -77,7 +77,7 @@ bool iniciarScanner(char archivoFuente[]) {
 }
 
 char demeCaracter() {
-    if (indiceBuffer == 1025) {
+    if (indiceBuffer == 1024) {
         cargarNuevoBuffer();
     }
     indiceBuffer++;
