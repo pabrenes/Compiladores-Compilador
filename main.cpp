@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
     token portaTokens = demeToken();
 
-    while (portaTokens.codigoFamilia != 159){
+    while (portaTokens.codigoFamilia != 118){
         murito.agregarLineaHTML(portaTokens);
         portaTokens = demeToken();
     }
