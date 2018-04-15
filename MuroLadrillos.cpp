@@ -9,6 +9,7 @@ using namespace std;
 
 /* en el constructor solo se inicializa el buffer para crear el string de salida */
 MuroLadrillos::MuroLadrillos() {
+    fill(this->contadorApariciones, this->contadorApariciones + 118, 0);
 
 }
 
@@ -36,6 +37,7 @@ void MuroLadrillos::agregarLineaHTML(token tokenActual) {
     string color = MuroLadrillos::vectorColores[tokenActual.codigoFamilia];
     string colorFont = MuroLadrillos::colorLetra[tokenActual.codigoFamilia];
     strSpan = "\n\t<span style=\"background-color: "+ color +"; color: "+ colorFont + "\">"+ lexema + "</span>\n";
+    this->contadorApariciones[tokenActual.codigoFamilia]++;
     archivoHTML << strSpan;
 }
 
@@ -45,4 +47,16 @@ void MuroLadrillos::cerrarHTML() {
                     "</html>";
     archivoHTML << cerrar;
     archivoHTML.close();
+}
+
+void MuroLadrillos::desplegarEstadisticas()
+{
+    std::cout << "Cantidad de apariciones de cada terminal \n" ;
+    for (int i = 0; i < 118; ++i)
+    {
+        if (contadorApariciones[i] != 0)
+        {
+            std::cout << MuroLadrillos::strTerminales[i] << " : " << contadorApariciones[i] << '\n' ;
+        }
+    }
 }

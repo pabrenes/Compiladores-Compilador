@@ -44,3 +44,15 @@ void token::imprimirToken() {
     cout << '\t' << "Ubicacion: " << fila << ":" << columnaInicio << "," << columnaFin << endl;
     cout << '\t' << "Codigo de error: " << codigoError << endl;
 }
+
+
+void limpiarEspaciadores(string lexeme){
+    int contador = 0 ;
+    for (int i = 0 ; i < lexeme.size() ; i++){
+
+        if (lexeme[i] == ' ' || lexeme[i] == '\t'){
+            lexeme.erase(0,1);
+            contador++;
+        }
+    }
+}
