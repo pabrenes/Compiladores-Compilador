@@ -38,11 +38,12 @@ void token::aumentarFilaInicio() {
 }
 
 void token::imprimirToken() {
-    cout << "Token:" << endl;
-    cout << '\t' << "Codigo familia: " << codigoFamilia << endl;
-    cout << '\t' << "Lexema: " << lexema << endl;
-    cout << '\t' << "Ubicacion: " << fila << ":" << columnaInicio << "," << columnaFin << endl;
-    cout << '\t' << "Codigo de error: " << codigoError << endl;
+    //cout << "Token:" << endl;
+    //cout << '\t' << "Codigo familia: " << codigoFamilia << endl;
+    //cout << '\t' << "Lexema: " << lexema << endl;
+    //cout << '\t' << "Ubicacion: " << fila << ":" << columnaInicio << "," << columnaFin << endl;
+    //cout << '\t' << "Codigo de error: " << codigoError << endl;
+    cout << "Codigo familia: " << codigoFamilia << " " << "Lexema: " << lexema << endl;
 }
 
 
