@@ -36,7 +36,7 @@ void MuroLadrillos::agregarLineaHTML(token tokenActual) {
     string lexema = tokenActual.lexema;
     string color = MuroLadrillos::vectorColores[tokenActual.codigoFamilia];
     string colorFont = MuroLadrillos::colorLetra[tokenActual.codigoFamilia];
-    strSpan = "\n\t<span style=\"background-color: "+ color +"; color: "+ colorFont + "\">"+ lexema + "</span>\n";
+    strSpan = "\n\t<span style=\"background-color: " + color + "; color: " + colorFont + "\">" + lexema + "</span>\n";
     this->contadorApariciones[tokenActual.codigoFamilia]++;
     archivoHTML << strSpan;
 }
@@ -49,14 +49,11 @@ void MuroLadrillos::cerrarHTML() {
     archivoHTML.close();
 }
 
-void MuroLadrillos::desplegarEstadisticas()
-{
-    std::cout << "Cantidad de apariciones de cada terminal \n" ;
-    for (int i = 0; i < 118; ++i)
-    {
-        if (contadorApariciones[i] != 0)
-        {
-            std::cout << MuroLadrillos::strTerminales[i] << " : " << contadorApariciones[i] << '\n' ;
+void MuroLadrillos::desplegarEstadisticas() {
+    std::cout << "Cantidad de apariciones de cada terminal \n";
+    for (int i = 0; i < 118; ++i) {
+        if (contadorApariciones[i] != 0) {
+            std::cout << MuroLadrillos::strTerminales[i] << " : " << contadorApariciones[i] << '\n';
         }
     }
 }

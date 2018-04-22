@@ -12,20 +12,19 @@ int main(int argc, char* argv[]) {
 
     MuroLadrillos murito;
 
-    murito.iniciarHTML("MuroLadrillos.html");
+    murito.iniciarHTML("Muro de ladrillos.html");
 
     token portaTokens = demeToken();
 
     while (portaTokens.codigoFamilia != 118){
-        murito.agregarLineaHTML(portaTokens);
+        if (portaTokens.codigoFamilia != -1)
+            murito.agregarLineaHTML(portaTokens);
         //portaTokens.imprimirToken();
         portaTokens = demeToken();
 
     }
 
     murito.cerrarHTML();
-
-    //murito.desplegarEstadisticas();
 
     finalizarScanner();
 

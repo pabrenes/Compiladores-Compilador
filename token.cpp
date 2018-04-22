@@ -46,12 +46,12 @@ void token::imprimirToken() {
 }
 
 
-void limpiarEspaciadores(string lexeme){
-    int contador = 0 ;
-    for (int i = 0 ; i < lexeme.size() ; i++){
+void limpiarEspaciadores(string lexeme) {
+    int contador = 0;
+    for (int i = 0; i < lexeme.size(); i++) {
 
-        if (lexeme[i] == ' ' || lexeme[i] == '\t'){
-            lexeme.erase(0,1);
+        if (lexeme[i] == ' ' || lexeme[i] == '\t') {
+            lexeme.erase(0, 1);
             contador++;
         }
     }

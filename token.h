@@ -16,11 +16,17 @@ struct token {
     int codigoError;
 
     token(int _fila, int _columnaInicio);
+
     void asignarCodigoFamilia(int _codigoFamilia);
+
     void asignarLexema(std::string _lexema);
+
     void asignarColumnaFin(int _columnaFin);
+
     void asignarCodigoError(int _codigoError);
+
     void aumentarFilaInicio();
+
     void imprimirToken();
 
 };

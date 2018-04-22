@@ -3,4 +3,4 @@ project(Lexico)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(Lexico main.cpp parser.h parser.cpp token.h token.cpp automata.h MuroLadrillos.cpp MuroLadrillos.h)
+add_executable(Lexico main.cpp parser.h parser.cpp token.h token.cpp MuroLadrillos.cpp MuroLadrillos.h automata.h)
