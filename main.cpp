@@ -10,20 +10,20 @@ int main(int argc, char* argv[]) {
 
     iniciarScanner(argv[posicionNombreArchivo]);
 
-    //MuroLadrillos murito;
+    MuroLadrillos murito;
 
-    //murito.iniciarHTML("MuroLadrillos.html");
+    murito.iniciarHTML("MuroLadrillos.html");
 
     token portaTokens = demeToken();
 
     while (portaTokens.codigoFamilia != 118){
-        //murito.agregarLineaHTML(portaTokens);
-        portaTokens.imprimirToken();
+        murito.agregarLineaHTML(portaTokens);
+        //portaTokens.imprimirToken();
         portaTokens = demeToken();
 
     }
 
-    //murito.cerrarHTML();
+    murito.cerrarHTML();
 
     //murito.desplegarEstadisticas();
 

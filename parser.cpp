@@ -11,8 +11,10 @@
 using namespace std;
 
 const int ajuste = 160;
-const int estadoInicial = 1;
+const int estadoInicial = 161 - ajuste;
 const int estadoError = 0;
+const int finComentarioBloque = 495 - ajuste;
+const int inicioComentarioBloque = 493 - ajuste;
 const char endln = '\n';
 const char separadorExtension = '.';
 const string extension = "lht";
@@ -112,6 +114,7 @@ int mapearCaracter(char caracter) {
 }
 
 token demeToken() {
+    int comentariosBloqueAbiertos = 0;
     string lexema;                                                                                                      //Espacio para el lexema
     char caracterTemporal = demeCaracter();                                                                             //Leo el primer caracter
     int caracterMapeado = mapearCaracter(caracterTemporal);
@@ -133,6 +136,18 @@ token demeToken() {
         //    nuevoToken.aumentarColumnaInicio();
         //    lexema.erase(0);
         //}
+
+
+        if (estadoActual == finComentarioBloque) {
+            comentariosBloqueAbiertos--;
+            if (comentariosBloqueAbiertos == 0) {
+                estadoAnterior = finComentarioBloque;
+                estadoActual = estadoInicial;
+            }
+        } else if (estadoActual == inicioComentarioBloque) {
+            comentariosBloqueAbiertos++;
+        }
+
         caracterTemporal = demeCaracter();
         caracterMapeado = mapearCaracter(caracterTemporal);
         estadoAnterior = estadoActual;
