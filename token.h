@@ -29,6 +29,7 @@ struct token {
 
     void imprimirToken();
 
+    void ajustarInicioLexema();
 };
 
 #endif //PARSER_TOKEN_H

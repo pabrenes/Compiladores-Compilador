@@ -197,6 +197,7 @@ token demeToken() {
     nuevoToken.asignarColumnaFin(lexema.length());
     nuevoToken.asignarCodigoFamilia(estadoActual +
                                     ajuste);                                                             //El ultimo estado seria el final que coincide con la familia
+    nuevoToken.ajustarInicioLexema();
     return nuevoToken;
 }
 

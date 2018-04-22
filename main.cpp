@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 
     //murito.cerrarHTML();
 
-    //finalizarScanner();
+    finalizarScanner();
 
     return 0;
 }

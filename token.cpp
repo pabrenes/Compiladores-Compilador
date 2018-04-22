@@ -38,22 +38,17 @@ void token::aumentarFilaInicio() {
 }
 
 void token::imprimirToken() {
-    //cout << "Token:" << endl;
-    //cout << '\t' << "Codigo familia: " << codigoFamilia << endl;
-    //cout << '\t' << "Lexema: " << lexema << endl;
-    //cout << '\t' << "Ubicacion: " << fila << ":" << columnaInicio << "," << columnaFin << endl;
-    //cout << '\t' << "Codigo de error: " << codigoError << endl;
-    cout << "Codigo familia: " << codigoFamilia << " " << "Lexema: " << lexema << endl;
+    cout << "Token:" << endl;
+    cout << '\t' << "Codigo familia: " << codigoFamilia << endl;
+    cout << '\t' << "Lexema: " << lexema << endl;
+    cout << '\t' << "Ubicacion: " << fila << ":" << columnaInicio << "," << columnaFin << endl;
+    cout << '\t' << "Codigo de error: " << codigoError << endl;
+    //cout << "Codigo familia: " << codigoFamilia << " " << "Lexema: " << lexema << endl;
 }
 
-
-void limpiarEspaciadores(string lexeme) {
-    int contador = 0;
-    for (int i = 0; i < lexeme.size(); i++) {
-
-        if (lexeme[i] == ' ' || lexeme[i] == '\t') {
-            lexeme.erase(0, 1);
-            contador++;
-        }
+void token::ajustarInicioLexema() {
+    while (lexema.front() == ' ' or lexema.front() == '\t') {
+        lexema.erase(0, 1);
+        columnaInicio++;
     }
 }
