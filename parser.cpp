@@ -6,10 +6,32 @@
 #include <fstream>
 #include <algorithm>
 #include <iterator>
+#include <locale>
 #include "token.h"
 #include "automata.h"
+#include "formatedPrint.h"
 
 #define CARACTER_PERDIDO 1
+#define LITERAL_NUMERICA_MAL_FORMADA 2
+#define LITERAL_CARACTER_VACIA 3
+#define LITERAL_CARACTER_SIN_CERRAR 4
+#define LITERAL_CARACTER_CON_TAB 5
+#define LITERAL_CARACTER_LARGA 6
+#define LITERAL_STRING_SIN_CERRAR 7
+#define LITERAL_STRING_CON_TAB 8
+#define LITERAL_STRING_MUY_LARGA 9
+
+#define ESTADO_PREVIO_ERROR_LITERAL_NUMERICA 2
+#define ESTADO_PREVIO_ERROR_LITERAL_CARACTER_VACIA 4
+#define ESTADO_PREVIO_ERROR_LITERAL_CARACTER_LARGA 5
+#define ESTADO_PREVIO_ERROR_LITERAL_CARACTER_ESCAPE 7
+#define ESTADO_PREVIO_ERROR_LITERAL_STRING 9
+#define ESTADO_PREVIO_ERROR_LITERAL_STRING_ESCAPE 11
+
+#define FAMILIA_LITERAL_ENTERA 1
+#define FAMILIA_LITERAL_CARACTER 2
+#define FAMILIA_LITERAL_STRING 3
+#define FAMILIA_MENOS 69
 
 using namespace std;
 
@@ -25,16 +47,28 @@ const string extension = "lht";
 const string errorArchivoNoAccesible = "Error 404, el archivo no pudo ser abierto para lectura";
 const string errorFormatoNoReconocible = "Error 405, formato de archivo no reconocible";
 
-const char errorCaracterPerdido[] = "Error 201, caracter \'%c\' extraviado. En linea:%d, columna:%d\n";
+const char errorCaracterPerdido[] = "Error 201, caracter '%s' extraviado. En linea: %d, columna: %d\n";
+const char errorNumericaMalFormada[] = "Error 202, literal numerica '%s' mal formada. En linea: %d, columna: %d\n";
+const char errorLiteralCaracterVacia[] = "Error 203, literal de caracter vacia. En linea: %d, columna: %d\n";
+const char errorLiteralCaracterSinCerrar[] = "Error 204, caracter ' terminador faltante. En linea: %d, columna: %d\n";
+const char errorLiteralCaracterConTab[] = "Error 205, tabulador horizontal no es valido en la literal '%s'. En linea: %d, columna: %d\n";
+const char errorLiteralCaracterLarga[] = "Error 206, la literal '%s' es demasiado larga. En linea: %d, columna: %d\n";
+const char errorLiteralStringSinCerrar[] = "Error 207, caracter \" terminador faltante. En linea: %d, columna: %d\n";
+const char errorLiteralStringConTab[] = "Error 208, tabulador horizontal no es valido en la literal '%s'. En linea: %d, columna: %d\n";
+const char errorLiteralStringLarga[] = "Error 209, la literal '%s' excede 31 caracteres de largo. En linea: %d, columna: %d\n";
 
 const int largoBuffer = 1024;
 const char caracteresSinUso[] = {'#', '$', '&', ';', '?', '\\', '^', '`', '~', static_cast<const char>(255)};
+const string terminadoresLiteralesLetras[] = {"emralat", "akko", "tat", "arrekvos", "arreksek", "che", "xche", "ma",
+                                              "fenat", "ejervalat", "govat", "anaquisan"};
 
 char buffer[largoBuffer + 1];
 int indiceBuffer = 0;
 int filaActual = 1;
 int columnaActual = 0;
 ifstream fuente;
+token *tokenAnterior;
+token *tokenBuffer;
 
 bool revisarExtension(const string &nombreArchivo) {
     int posicion = nombreArchivo.find_last_of(separadorExtension);
@@ -97,6 +131,7 @@ char demeCaracter() {
 
 void tomeCaracter() {
     indiceBuffer--;
+    columnaActual--;
 }
 
 void ajustarPuntero() {
@@ -119,53 +154,192 @@ int mapearCaracter(char caracter) {
     return caracter;
 }
 
-void reportarError(token token) {
-    if (token.codigoError == CARACTER_PERDIDO) {
-        printf(errorCaracterPerdido, token.lexema.front(), token.fila, token.columnaInicio);
+void reportarError(token *token) {
+    if (token->codigoError == CARACTER_PERDIDO) {
+        printff(errorCaracterPerdido, token->lexema, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_NUMERICA_MAL_FORMADA) {
+        printff(errorNumericaMalFormada, token->lexema, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_CARACTER_VACIA) {
+        printff(errorLiteralCaracterVacia, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_CARACTER_SIN_CERRAR) {
+        printff(errorLiteralCaracterSinCerrar, token->fila, token->columnaFin);
+    } else if (token->codigoError == LITERAL_CARACTER_CON_TAB) {
+        printff(errorLiteralCaracterConTab, token->lexema, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_CARACTER_LARGA) {
+        printff(errorLiteralCaracterLarga, token->lexema, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_STRING_SIN_CERRAR) {
+        printff(errorLiteralStringSinCerrar, token->fila, token->columnaFin);
+    } else if (token->codigoError == LITERAL_STRING_CON_TAB) {
+        printff(errorLiteralStringConTab, token->lexema, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_STRING_MUY_LARGA) {
+        printff(errorLiteralStringLarga, token->lexema, token->fila, token->columnaInicio);
     }
 }
 
-token procesarErrorLexico(token token, char temporal, int estadoAnterior) {
-    if ( find(begin(caracteresSinUso), end(caracteresSinUso), temporal) != end(caracteresSinUso) ) {
-        token.asignarCodigoError(CARACTER_PERDIDO);
-        token.asignarCodigoFamilia(-1);
-        token.lexema += temporal;
-        token.asignarColumnaFin(1);
+token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnterior, string lexema) {
+    if (find(begin(caracteresSinUso), end(caracteresSinUso), caracterTemporal) != end(caracteresSinUso)) {
+        token->asignarCodigoError(CARACTER_PERDIDO);
+        token->asignarCodigoFamilia(-1);
+        token->lexema += caracterTemporal;
+        token->asignarColumnaFin(1);
         reportarError(token);
         return token;
+    } else if (estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_NUMERICA) {
+        string sufijoErrorLiteral;
+        sufijoErrorLiteral += caracterTemporal;
+        char temporal;
+        int pasos = 2;
+        while (temporal = demeCaracter(), isalnum(temporal) || temporal == '_') {
+            sufijoErrorLiteral += temporal;
+            pasos++;
+        }
+        if (find(begin(terminadoresLiteralesLetras), end(terminadoresLiteralesLetras), sufijoErrorLiteral) !=
+            end(terminadoresLiteralesLetras)) {
+            while (pasos--) {
+                tomeCaracter();
+            }
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_ENTERA);
+            token->asignarLexema(lexema);
+            token->asignarColumnaFin(lexema.length());
+            token->ajustarInicioLexema();
+            return token;
+        } else {
+            tomeCaracter();
+            token->asignarCodigoError(LITERAL_NUMERICA_MAL_FORMADA);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_ENTERA);
+            token->asignarLexema(lexema + sufijoErrorLiteral);
+            token->asignarColumnaFin(token->lexema.length());
+            reportarError(token);
+            return token;
+        }
+    } else if (estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_CARACTER_VACIA) {
+        if (caracterTemporal == '\'') {
+            token->asignarLexema(lexema + caracterTemporal);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_CARACTER_VACIA);
+            reportarError(token);
+            return token;
+        } else if (caracterTemporal == '\n' || caracterTemporal == '\0') {
+            token->asignarLexema(lexema);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+            reportarError(token);
+            return token;
+        } else if (caracterTemporal == '\t') {
+            lexema += caracterTemporal;
+            char temporal;
+            while (temporal = demeCaracter(), temporal != '\'' && temporal != '\n' && temporal != '\0' &&
+                                              temporal != ' ' && temporal != '\t') {
+                lexema += temporal;
+            }
+            token->asignarLexema(lexema);
+            if (temporal == '\'')
+                token->asignarLexema(lexema + temporal);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_CARACTER_CON_TAB);
+            reportarError(token);
+            if (temporal == '\n' || temporal == '\0' || temporal == ' ' || temporal == '\t') {
+                token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+                reportarError(token);
+                if (temporal == '\n')
+                    ajustarPuntero();
+            }
+            return token;
+        }
+    } else if (estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_CARACTER_LARGA) {
+        if (caracterTemporal == '\n' || caracterTemporal == '\0' || caracterTemporal == ' ' ||
+            caracterTemporal == '\t') {
+            token->asignarLexema(lexema);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+            reportarError(token);
+            return token;
+        } else {
+            lexema += caracterTemporal;
+            char temporal = caracterTemporal;
+            while (temporal != '\'' && temporal != '\n' && temporal != '\0' &&
+                   temporal != ' ' && temporal != '\t') {
+                temporal = demeCaracter();
+                lexema += temporal;
+            }
+            token->asignarLexema(lexema);
+            if (temporal == '\'')
+                token->asignarLexema(lexema + temporal);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_CARACTER_LARGA);
+            reportarError(token);
+            if (temporal == '\n' || temporal == '\0' || temporal == ' ' || temporal == '\t') {
+                token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+                reportarError(token);
+                if (temporal == '\n')
+                    ajustarPuntero();
+            }
+            return token;
+        }
+    } else if (estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_CARACTER_ESCAPE) {
+        token->asignarLexema(lexema);
+        token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
+        token->asignarColumnaFin(token->lexema.length());
+        token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+        reportarError(token);
+        return token;
+    } else if (estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_STRING ||
+               estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_STRING_ESCAPE) {
+        if (caracterTemporal == '\n' || caracterTemporal == '\0') {
+            token->asignarLexema(lexema);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_STRING);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_STRING_SIN_CERRAR);
+            reportarError(token);
+            return token;
+        } else if (caracterTemporal == '\t') {
+            lexema += caracterTemporal;
+            char temporal;
+            while (temporal = demeCaracter(), (temporal != '\n' && temporal != '\0' && temporal != '"') ||
+                                              (lexema.back() == '\\' && temporal == '"')) {
+                lexema += temporal;
+            }
+            if (temporal == '"')
+                lexema += temporal;
+            token->asignarLexema(lexema);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_STRING);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_STRING_CON_TAB);
+            reportarError(token);
+            if (temporal == '\n' || temporal == '\0') {
+                token->asignarCodigoError(LITERAL_STRING_SIN_CERRAR);
+                reportarError(token);
+                if (temporal == '\n')
+                    ajustarPuntero();
+            }
+            return token;
+        }
     } else {
-        token.asignarCodigoError(69);
+        token->asignarCodigoError(69);
         return token;
     }
 }
 
-token demeToken() {
+token *demeTokenAux() {
     int comentariosBloqueAbiertos = 0;
-    string lexema;                                                                                                      //Espacio para el lexema
-    char caracterTemporal = demeCaracter();                                                                             //Leo el primer caracter
+    string lexema;
+    char caracterTemporal = demeCaracter();
     int caracterMapeado = mapearCaracter(caracterTemporal);
-    estadoAnterior = estadoInicial;                                                                                     //El primer estado anterior siempre es el inicial
-    estadoActual = automata[estadoInicial][caracterMapeado] -
-                   ajuste;                                                   //Voy del estado inicial al que dicte el caracter leido
-    token nuevoToken = token(filaActual,
-                             columnaActual);                                                                //Creo el token con los puntos actuales
-    while (estadoActual >
-           0) {                                                                                          //Automata
+    estadoAnterior = estadoInicial;
+    estadoActual = automata[estadoInicial][caracterMapeado] - ajuste;
+    token *nuevoToken = new token(filaActual, columnaActual);
+    while (estadoActual > 0) {
         lexema += caracterTemporal;
         if (caracterTemporal == '\n') {
             ajustarPuntero();
-            nuevoToken.aumentarFilaInicio();
+            nuevoToken->aumentarFilaInicio();
             lexema.erase(0);
         }
-        //else if (caracterTemporal == '\t') {
-        //    nuevoToken.aumentarColumnaInicio();
-        //    lexema.erase(0);
-        //} else if (caracterTemporal == ' ') {
-        //    //manejar el caso del ha nakhaan, supongo que lo sensato es saber en cual estado estoy si en de n luego de leer espacio en el ha
-        //    nuevoToken.aumentarColumnaInicio();
-        //    lexema.erase(0);
-        //}
-
 
         if (estadoActual == finComentarioBloque) {
             comentariosBloqueAbiertos--;
@@ -182,23 +356,71 @@ token demeToken() {
         estadoAnterior = estadoActual;
         estadoActual = automata[estadoActual][caracterMapeado] - ajuste;
     }
-    if (estadoActual == estadoError) {
-        return procesarErrorLexico(nuevoToken, caracterTemporal, estadoAnterior);
-    }
     if (caracterTemporal == '\n') {
         ajustarPuntero();
     }
-    if (caracterTemporal != '\t' && caracterTemporal != '\n' &&
-        caracterTemporal != ' ') {                              //Verifico que no me haya comido algo importante
-        tomeCaracter();                                                                                                 //De ser devuelvo el caracter al buffer
+    if (estadoActual == estadoError) {
+        return procesarErrorLexico(nuevoToken, caracterTemporal, estadoAnterior, lexema);
     }
-    nuevoToken.asignarLexema(
-            lexema);                                                                                   //Guardo el lexema en el token
-    nuevoToken.asignarColumnaFin(lexema.length());
-    nuevoToken.asignarCodigoFamilia(estadoActual +
-                                    ajuste);                                                             //El ultimo estado seria el final que coincide con la familia
-    nuevoToken.ajustarInicioLexema();
+    if (caracterTemporal != '\t' && caracterTemporal != '\n' && caracterTemporal != ' ') {
+        tomeCaracter();
+    }
+    nuevoToken->asignarLexema(lexema);
+    nuevoToken->asignarColumnaFin(lexema.length());
+    nuevoToken->asignarCodigoFamilia(estadoActual + ajuste);
+    nuevoToken->ajustarInicioLexema();
     return nuevoToken;
+}
+
+void validarToken(token *token) {
+    if (token->codigoError == 0 && token->codigoFamilia == FAMILIA_LITERAL_STRING) {
+        if (!token->lexema.length() < 32) {
+            int caracteres = 0;
+            for(int i = 1; i < token->lexema.length() - 1; i++){
+                caracteres++;
+                if (token->lexema[i] == '\\')
+                    i++;
+            }
+            if (caracteres > 31)
+                token->asignarCodigoError(LITERAL_STRING_MUY_LARGA);
+            reportarError(token);
+        }
+    }
+}
+
+token *demeToken() {
+    if (tokenBuffer) {
+        delete tokenAnterior;
+        token *actual = tokenBuffer;
+        tokenAnterior = actual;
+        tokenBuffer = nullptr;
+        validarToken(actual);
+        return actual;
+    }
+    token *actual = demeTokenAux();
+    if (tokenAnterior->codigoFamilia == FAMILIA_LITERAL_ENTERA && actual->codigoFamilia == FAMILIA_LITERAL_ENTERA) {
+        if (actual->lexema.front() == '-') {
+            token *nuevoActual = new token(actual->fila, actual->columnaInicio);
+            nuevoActual->asignarColumnaFin(1);
+            nuevoActual->asignarCodigoFamilia(FAMILIA_MENOS);
+            nuevoActual->asignarLexema("-");
+            tokenBuffer = actual;
+            tokenBuffer->lexema.erase(0, 1);
+            tokenBuffer->columnaInicio++;
+            validarToken(nuevoActual);
+            return nuevoActual;
+        }
+    }
+    delete tokenAnterior;
+    tokenAnterior = actual;
+    validarToken(actual);
+    return actual;
+}
+
+token *demePrimerToken() {
+    tokenAnterior = demeTokenAux();
+    validarToken(tokenAnterior);
+    return tokenAnterior;
 }
 
 bool finalizarScanner() {

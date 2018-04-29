@@ -11,6 +11,8 @@ bool iniciarScanner(char archivoFuente[]);
 
 bool finalizarScanner();
 
-token demeToken();
+token* demeToken();
+
+token* demePrimerToken();
 
 #endif //PARSER_PARSER_H
