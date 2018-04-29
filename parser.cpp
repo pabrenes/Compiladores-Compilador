@@ -51,8 +51,8 @@ const char errorCaracterPerdido[] = "Error 201, caracter '%s' extraviado. En lin
 const char errorNumericaMalFormada[] = "Error 202, literal numerica '%s' mal formada. En linea: %d, columna: %d\n";
 const char errorLiteralCaracterVacia[] = "Error 203, literal de caracter vacia. En linea: %d, columna: %d\n";
 const char errorLiteralCaracterSinCerrar[] = "Error 204, caracter ' terminador faltante. En linea: %d, columna: %d\n";
-const char errorLiteralCaracterConTab[] = "Error 205, tabulador horizontal no es valido en la literal '%s'. En linea: %d, columna: %d\n";
-const char errorLiteralCaracterLarga[] = "Error 206, la literal '%s' es demasiado larga. En linea: %d, columna: %d\n";
+const char errorLiteralCaracterConTab[] = "Error 205, tabulador horizontal no es valido en la literal \"%s\". En linea: %d, columna: %d\n";
+const char errorLiteralCaracterLarga[] = "Error 206, la literal \"%s\" es demasiado larga. En linea: %d, columna: %d\n";
 const char errorLiteralStringSinCerrar[] = "Error 207, caracter \" terminador faltante. En linea: %d, columna: %d\n";
 const char errorLiteralStringConTab[] = "Error 208, tabulador horizontal no es valido en la literal '%s'. En linea: %d, columna: %d\n";
 const char errorLiteralStringLarga[] = "Error 209, la literal '%s' excede 31 caracteres de largo. En linea: %d, columna: %d\n";
@@ -267,8 +267,6 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
                 lexema += temporal;
             }
             token->asignarLexema(lexema);
-            if (temporal == '\'')
-                token->asignarLexema(lexema + temporal);
             token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_CARACTER_LARGA);
