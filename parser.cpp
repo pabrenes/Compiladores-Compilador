@@ -10,6 +10,7 @@
 #include "token.h"
 #include "automata.h"
 #include "formatedPrint.h"
+#include "parser.h"
 
 #define CARACTER_PERDIDO 1
 #define LITERAL_NUMERICA_MAL_FORMADA 2
@@ -32,6 +33,8 @@
 #define FAMILIA_LITERAL_CARACTER 2
 #define FAMILIA_LITERAL_STRING 3
 #define FAMILIA_MENOS 69
+
+#define IGNORAR_TOKEN -3
 
 using namespace std;
 
@@ -61,7 +64,6 @@ const int largoBuffer = 1024;
 const char caracteresSinUso[] = {'#', '$', '&', ';', '?', '\\', '^', '`', '~', static_cast<const char>(255)};
 const string terminadoresLiteralesLetras[] = {"emralat", "akko", "tat", "arrekvos", "arreksek", "che", "xche", "ma",
                                               "fenat", "ejervalat", "govat", "anaquisan"};
-
 char buffer[largoBuffer + 1];
 int indiceBuffer = 0;
 int filaActual = 1;
@@ -179,8 +181,9 @@ void reportarError(token *token) {
 token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnterior, string lexema) {
     if (find(begin(caracteresSinUso), end(caracteresSinUso), caracterTemporal) != end(caracteresSinUso)) {
         token->asignarCodigoError(CARACTER_PERDIDO);
-        token->asignarCodigoFamilia(-1);
-        token->lexema += caracterTemporal;
+        token->asignarCodigoFamilia(IGNORAR_TOKEN);
+        token->lexema += lexema + caracterTemporal;
+        token->ajustarInicioLexema();
         token->asignarColumnaFin(1);
         reportarError(token);
         return token;
@@ -338,7 +341,6 @@ token *demeTokenAux() {
             nuevoToken->aumentarFilaInicio();
             lexema.erase(0);
         }
-
         if (estadoActual == finComentarioBloque) {
             comentariosBloqueAbiertos--;
             if (comentariosBloqueAbiertos == 0) {
@@ -370,7 +372,7 @@ token *demeTokenAux() {
     return nuevoToken;
 }
 
-void validarToken(token *token) {
+token *validarToken(token *token) {
     if (token->codigoError == 0 && token->codigoFamilia == FAMILIA_LITERAL_STRING) {
         if (!token->lexema.length() < 32) {
             int caracteres = 0;
@@ -383,7 +385,10 @@ void validarToken(token *token) {
                 token->asignarCodigoError(LITERAL_STRING_MUY_LARGA);
             reportarError(token);
         }
+    } else if (token->codigoFamilia == IGNORAR_TOKEN) {
+        return demeToken();
     }
+    return token;
 }
 
 token *demeToken() {
@@ -392,8 +397,7 @@ token *demeToken() {
         token *actual = tokenBuffer;
         tokenAnterior = actual;
         tokenBuffer = nullptr;
-        validarToken(actual);
-        return actual;
+        return validarToken(actual);
     }
     token *actual = demeTokenAux();
     if (tokenAnterior->codigoFamilia == FAMILIA_LITERAL_ENTERA && actual->codigoFamilia == FAMILIA_LITERAL_ENTERA) {
@@ -405,20 +409,17 @@ token *demeToken() {
             tokenBuffer = actual;
             tokenBuffer->lexema.erase(0, 1);
             tokenBuffer->columnaInicio++;
-            validarToken(nuevoActual);
-            return nuevoActual;
+            return validarToken(nuevoActual);
         }
     }
     delete tokenAnterior;
     tokenAnterior = actual;
-    validarToken(actual);
-    return actual;
+    return validarToken(actual);
 }
 
 token *demePrimerToken() {
     tokenAnterior = demeTokenAux();
-    validarToken(tokenAnterior);
-    return tokenAnterior;
+    return validarToken(tokenAnterior);
 }
 
 bool finalizarScanner() {
