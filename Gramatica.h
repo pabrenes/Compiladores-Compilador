@@ -14,6 +14,7 @@
 #define INC_Gramatica_h_
 
 /* Constantes necesarias para un driver de parsing */
+
 #define TERMINAL(X)  ((0 <= (X)) && ((X) <= 118))
 #define NO_TERMINAL(X)  ((119 <= (X)) && ((X) <= 242))
 #define MARCA_DERECHA 118
@@ -26,5 +27,13 @@
 /* Prototipos de las tablas */
 extern const int TablaParsing[124][NO_TERMINAL_INICIAL];
 extern const int LadosDerechos[268][MAX_LADO_DER];
+
+/* Constantes necesarias para el algoritmo de recuperación de errores */
+#define MAX_FOLLOWS 93
+
+/* Prototipo de la tabla de follows */
+extern const int TablaFollows[124][MAX_FOLLOWS];
+
+extern const char* strTerminales[119];
 
 #endif /* INC_Gramatica_h_ */
