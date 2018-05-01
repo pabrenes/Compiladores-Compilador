@@ -6,7 +6,7 @@
 using namespace std;
 
 const int posicionNombreArchivo = 1;
-
+bool banderaErrorSintactico = false;
 
 bool esFollow(int i, int j) {
     bool result = false;
@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
             if (EAP == TA->codigoFamilia) {
                 TA = demeToken();
             } else {
+                banderaErrorSintactico = true;
                 cout << "\n ERROR: Se esperaba un: '" << strTerminales[EAP] << "' y obtuve un: " << TA->lexema
                      << " en linea: " << TA->fila << " columnaInicio: " << TA->columnaInicio << " columnaFin: "
                      << TA->columnaFin;
@@ -52,7 +53,6 @@ int main(int argc, char *argv[]) {
                     PilaAuxiliar.push(41);
                     PilaAuxiliar.push(42);
                     PilaAuxiliar.push(43);
-
                     PilaAuxiliar.push(156);
 
                     do {
@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
         } else {
             regla = TablaParsing[EAP - NO_TERMINAL_INICIAL][TA->codigoFamilia];
             if (regla < 0) {
+                banderaErrorSintactico = true;
                 cout << "\nError gramatical " << regla << '\t';
                 cout << " en linea: " << TA->fila << " columnaInicio: " << TA->columnaInicio << " columnaFin: "
                      << TA->columnaFin;
@@ -106,10 +107,9 @@ int main(int argc, char *argv[]) {
         finalizarScanner();
         return 0;
     }
-
-    cout << "Sintacticamente correcto\n";
-
-
+    if ((banderaErrorSintactico || getError()))
+        cout << "Compilacion terminada.\n";
+    
     finalizarScanner();
 
     return 0;

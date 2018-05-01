@@ -7,6 +7,8 @@
 
 #include "token.h"
 
+bool getError();
+
 bool iniciarScanner(char archivoFuente[]);
 
 bool finalizarScanner();

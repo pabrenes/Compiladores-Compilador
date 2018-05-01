@@ -71,6 +71,7 @@ int columnaActual = 0;
 ifstream fuente;
 token *tokenAnterior;
 token *tokenBuffer;
+bool banderaErrorLexico = false;
 
 bool revisarExtension(const string &nombreArchivo) {
     int posicion = nombreArchivo.find_last_of(separadorExtension);
@@ -179,6 +180,7 @@ void reportarError(token *token) {
 }
 
 token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnterior, string lexema) {
+    banderaErrorLexico = true;
     if (find(begin(caracteresSinUso), end(caracteresSinUso), caracterTemporal) != end(caracteresSinUso)) {
         token->asignarCodigoError(CARACTER_PERDIDO);
         token->asignarCodigoFamilia(IGNORAR_TOKEN);
@@ -426,5 +428,8 @@ bool finalizarScanner() {
     if (fuente.is_open()) {
         fuente.close();
     }
+}
 
+bool getError() {
+    return banderaErrorLexico;
 }
