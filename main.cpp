@@ -41,9 +41,9 @@ int main(int argc, char *argv[]) {
                 TA = demeToken();
             } else {
                 banderaErrorSintactico = true;
-                cout << "\n ERROR: Se esperaba un: '" << strTerminales[EAP] << "' y obtuve un: " << TA->lexema
+                cout << "Error: Se esperaba un: '" << strTerminales[EAP] << "' y obtuve un: " << TA->lexema
                      << " en linea: " << TA->fila << " columnaInicio: " << TA->columnaInicio << " columnaFin: "
-                     << TA->columnaFin;
+                     << TA->columnaFin << '\n';
                 int bandera = 1;
                 do {
                     PilaAuxiliar.push(10);
@@ -75,9 +75,9 @@ int main(int argc, char *argv[]) {
             regla = TablaParsing[EAP - NO_TERMINAL_INICIAL][TA->codigoFamilia];
             if (regla < 0) {
                 banderaErrorSintactico = true;
-                cout << "\nError gramatical " << regla << '\t';
+                cout << "Error gramatical " << regla << '\t';
                 cout << " en linea: " << TA->fila << " columnaInicio: " << TA->columnaInicio << " columnaFin: "
-                     << TA->columnaFin;
+                     << TA->columnaFin << '\n';
 
                 int follow = 0;
                 int i = MAX_FOLLOWS;
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
         finalizarScanner();
         return 0;
     }
-    if ((banderaErrorSintactico || getError()))
+    if (!(banderaErrorSintactico || getError()))
         cout << "Compilacion terminada.\n";
     
     finalizarScanner();
