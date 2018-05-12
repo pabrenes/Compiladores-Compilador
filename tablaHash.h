@@ -17,8 +17,6 @@ struct tablaHash {
 
     tablaHash(unsigned int _largoHash);
 
-    uint32_t hashF(const string key, size_t length);
-
     void insertar(simbolo *simbolo);
 
     bool buscar(string key);

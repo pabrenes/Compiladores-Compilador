@@ -2,6 +2,8 @@
 #include "parser.h"
 #include <stack>
 #include "Gramatica.h"
+#include "GTablaFollows.h"
+#include "nombresTerminales.h"
 
 using namespace std;
 
@@ -71,33 +73,31 @@ int main(int argc, char *argv[]) {
                 } while (TA->codigoFamilia != MARCA_DERECHA && bandera);
             }
 
-        } else {
+        } else if (NO_TERMINAL(EAP)) {
             regla = TablaParsing[EAP - NO_TERMINAL_INICIAL][TA->codigoFamilia];
             if (regla < 0) {
                 banderaErrorSintactico = true;
                 cout << "Error gramatical " << regla << '\t';
                 cout << " en linea: " << TA->fila << " columnaInicio: " << TA->columnaInicio << " columnaFin: "
                      << TA->columnaFin << '\n';
-
-                int follow = 0;
+                //int follow = 0;
                 int i = MAX_FOLLOWS;
                 while (i--) {
                     TA = demeToken();
                     if (esFollow(EAP - NO_TERMINAL_INICIAL, TA->codigoFamilia)) {
-                        follow = 1;
-
+                        //follow = 1;
                         break;
                     }
-
-
                 }
-
             } else {
                 int i = 0;
                 while ((LadosDerechos[regla][i] > -1) && (i < MAX_LADO_DER)) {
                     PilaParsing.push(LadosDerechos[regla][i++]);
                 }
             }
+
+        } else { //simbolo semantico
+
         }
     }
 
@@ -107,10 +107,10 @@ int main(int argc, char *argv[]) {
         finalizarScanner();
         return 0;
     }
-    if ( !banderaErrorSintactico )
+    if (!banderaErrorSintactico)
         //if ( !getError() )
-            cout << "Compilacion terminada.\n";
-    
+        cout << "Compilacion terminada.\n";
+
     finalizarScanner();
 
     return 0;
