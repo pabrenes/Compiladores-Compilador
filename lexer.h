@@ -6,6 +6,7 @@
 #define PARSER_PARSER_H
 
 #include "token.h"
+#include "formatedPrint.h"
 
 bool getError();
 

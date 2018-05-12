@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-void printff(const char* s) {
+void static printff(const char* s) {
     while (*s) {
         if (*s == '%' && *++s != '%')
             throw std::runtime_error("invalid format string: missing arguments");
@@ -16,7 +16,7 @@ void printff(const char* s) {
 }
 
 template<typename T, typename... Args>
-void printff(const char* s, const T& value, const Args&... args) {
+void static printff(const char* s, const T& value, const Args&... args) {
     while (*s) {
         if (*s == '%' && *++s != '%') {
             std::cout << value;

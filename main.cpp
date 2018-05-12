@@ -1,9 +1,11 @@
 
-#include "parser.h"
 #include <stack>
+#include "lexer.h"
 #include "Gramatica.h"
 #include "GTablaFollows.h"
 #include "nombresTerminales.h"
+#include "tablaHash.h"
+#include "erroresSemanticos.h"
 
 using namespace std;
 
@@ -24,6 +26,8 @@ bool esFollow(int i, int j) {
 int main(int argc, char *argv[]) {
 
     iniciarScanner(argv[posicionNombreArchivo]);
+
+    tablaHash* tablaSimbolos = new tablaHash(4096);
 
     token *TA = demePrimerToken();
     stack<int> PilaParsing;
@@ -97,7 +101,11 @@ int main(int argc, char *argv[]) {
             }
 
         } else { //simbolo semantico
-
+            switch(EAP) {
+                case ValidarExistenciaIdentificador:
+                    if (tablaSimbolos->buscar(TA->lexema))
+                        printff(errorIdentificadorDuplicado, TA->lexema, TA->fila, TA->columnaFin);
+            }
         }
     }
 

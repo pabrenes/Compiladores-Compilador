@@ -9,8 +9,7 @@
 #include <locale>
 #include "token.h"
 #include "automata.h"
-#include "formatedPrint.h"
-#include "parser.h"
+#include "lexer.h"
 
 #define CARACTER_PERDIDO 1
 #define LITERAL_NUMERICA_MAL_FORMADA 2
