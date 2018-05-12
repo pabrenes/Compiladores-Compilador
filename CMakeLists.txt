@@ -3,4 +3,4 @@ project(Lexico)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(Lexico main.cpp parser.h parser.cpp token.h token.cpp automata.h Gramatica.h Gramatica.cpp formatedPrint.h)
+add_executable(Lexico main.cpp parser.h parser.cpp token.h token.cpp automata.h Gramatica.h Gramatica.cpp formatedPrint.h simbolo.h simboloVariable.cpp simboloVariable.h tablaHash.h tablaHash.cpp)

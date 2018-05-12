@@ -107,8 +107,9 @@ int main(int argc, char *argv[]) {
         finalizarScanner();
         return 0;
     }
-    if (!(banderaErrorSintactico || getError()))
-        cout << "Compilacion terminada.\n";
+    if ( !banderaErrorSintactico )
+        //if ( !getError() )
+            cout << "Compilacion terminada.\n";
     
     finalizarScanner();
 
