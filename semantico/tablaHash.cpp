@@ -2,6 +2,7 @@
 // Created by Pablo Brenes on 12 may 2018.
 //
 
+#include <iostream>
 #include "tablaHash.h"
 
 tablaHash::tablaHash(unsigned int _largoHash) {
@@ -24,15 +25,17 @@ uint32_t hashF(const string key, size_t length) {
 }
 
 void tablaHash::insertar(simbolo *simbolo){
+    transform(simbolo->identificador.begin(), simbolo->identificador.end(), simbolo->identificador.begin(), ::tolower);
     uint32_t hash = hashF(simbolo->identificador, simbolo->identificador.length()) % largoHash;
     arreglo->at(hash).push_back(simbolo);
 }
 
-bool tablaHash::buscar(string key) {
+simbolo* tablaHash::buscar(string key) {
+    transform(key.begin(), key.end(), key.begin(), ::tolower);
     uint32_t hash = hashF(key, key.length()) % largoHash;
     for (auto &i : arreglo->at(hash)) {
-        if (i->identificador == key)
-            return true;
+        if (i->identificador.compare(key))
+            return i;
     }
-    return false;
+    return nullptr;
 }

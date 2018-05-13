@@ -1,7 +1,7 @@
 ﻿/*
  * Gramatica.h
  *
- * 2018/05/12 14:52:15
+ * 2018/05/12 21:47:12
  *
  * Archivo generado por GikGram 2.0
  *
@@ -24,6 +24,9 @@
 #define ValidarExistenciaIdentificador 243
 #define PrepararSimboloConstante 244
 #define ActualizarSimboloConstante 245
+#define PrepararSimboloTipoDefinido 246
+#define ActualizarSimboloTipoDefinido 247
+#define ValidarIdentificadorDeclarado 248
 
 /* Prototipos de las tablas */
 extern const int TablaParsing[124][NO_TERMINAL_INICIAL];

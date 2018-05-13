@@ -3,4 +3,4 @@ project(Lexico)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(Lexico main.cpp lexer.h lexer.cpp token.h token.cpp automata.h Gramatica.h Gramatica.cpp formatedPrint.h simbolo.h simboloVariable.cpp simboloVariable.h tablaHash.h tablaHash.cpp GTablaFollows.h GTablaFollows.cpp nombresTerminales.h nombresTerminales.cpp erroresSemanticos.h)
+add_executable(Lexico main.cpp lexer/lexer.h lexer/lexer.cpp lexer/token.h lexer/token.cpp lexer/automata.h gramaticas/Gramatica.h gramaticas/Gramatica.cpp formatedPrint.h semantico/simbolos/simbolo.h semantico/simbolos/simboloVariable.cpp semantico/simbolos/simboloVariable.h semantico/tablaHash.h semantico/tablaHash.cpp gramaticas/GTablaFollows.h gramaticas/GTablaFollows.cpp gramaticas/nombresTerminales.h gramaticas/nombresTerminales.cpp semantico/erroresSemanticos.h semantico/simbolos/simboloConstante.cpp semantico/simbolos/simboloConstante.h semantico/simbolos/simboloTipoDefinido.cpp semantico/simbolos/simboloTipoDefinido.h)

@@ -20,6 +20,8 @@
 #define LITERAL_STRING_SIN_CERRAR 7
 #define LITERAL_STRING_CON_TAB 8
 #define LITERAL_STRING_MUY_LARGA 9
+#define LITERAL_FRACCION_SIN_DENOMINADOR 10
+#define LITERAL_FRACCION_MAL_FORMADA 11
 
 #define ESTADO_PREVIO_ERROR_LITERAL_NUMERICA 2
 #define ESTADO_PREVIO_ERROR_LITERAL_CARACTER_VACIA 4
@@ -27,10 +29,26 @@
 #define ESTADO_PREVIO_ERROR_LITERAL_CARACTER_ESCAPE 7
 #define ESTADO_PREVIO_ERROR_LITERAL_STRING 9
 #define ESTADO_PREVIO_ERROR_LITERAL_STRING_ESCAPE 11
+#define ESTADO_PREVIO_ERROR_LITERAL_FRACCION_PRIMERO 336
+#define ESTADO_PREVIO_ERROR_LITERAL_FRACCION 337
+#define ESTADO_PREVIO_ERROR_CARACTER_SLASH_PERDIDO 290
 
+
+#define FAMILIA_IDENTIFICADOR 0
 #define FAMILIA_LITERAL_ENTERA 1
 #define FAMILIA_LITERAL_CARACTER 2
 #define FAMILIA_LITERAL_STRING 3
+#define FAMILIA_SEK 4
+#define FAMILIA_VOS 5
+#define FAMILIA_LLAVE_DERECHA 7
+#define FAMILIA_ADDRIVAT 32
+#define FAMILIA_CERRAR_RECORTAR 84
+#define FAMILIA_CERRAR_CORTAR 86
+#define FAMILIA_PIPE 88
+#define FAMILIA_PARENTESIS_DERECHO 112
+#define FAMILIA_CORCHETE_DERECHO 115
+#define FAMILIA_LITERAL_FRACCION 117
+
 #define FAMILIA_MENOS 69
 
 #define IGNORAR_TOKEN -3
@@ -42,6 +60,7 @@ const int estadoInicial = 161 - ajuste;
 const int estadoError = 160 - ajuste;
 const int finComentarioBloque = 495 - ajuste;
 const int inicioComentarioBloque = 493 - ajuste;
+const int estadoRepararLecturaFraccion = 159 - ajuste;
 const char endln = '\n';
 const char separadorExtension = '.';
 const string extension = "lht";
@@ -58,11 +77,19 @@ const char errorLiteralCaracterLarga[] = "Error 206, la literal \"%s\" es demasi
 const char errorLiteralStringSinCerrar[] = "Error 207, caracter \" terminador faltante. En linea: %d, columna: %d\n";
 const char errorLiteralStringConTab[] = "Error 208, tabulador horizontal no es valido en la literal '%s'. En linea: %d, columna: %d\n";
 const char errorLiteralStringLarga[] = "Error 209, la literal '%s' excede 31 caracteres de largo. En linea: %d, columna: %d\n";
+const char errorLiteralFraccionSinDenominador[] = "Error 210, literal de fraccion '%s' no posee denominador. En linea: %d, columna: %d\n";
+const char errorLiteralFraccionMalFormada[] = "Error 211, literal de fraccion '%s' mal formada. En linea: %d, columna: %d\n";
 
 const int largoBuffer = 1024;
-const char caracteresSinUso[] = {'#', '$', '&', ';', '?', '\\', '^', '`', '~', static_cast<const char>(255)};
+const char caracteresSinUso[] = {'#', '$', '&', ';', '?', '\\', '^', '`', '~', '/', static_cast<const char>(255)};
 const string terminadoresLiteralesLetras[] = {"emralat", "akko", "tat", "arrekvos", "arreksek", "che", "xche", "ma",
                                               "fenat", "ejervalat", "govat", "anaquisan"};
+const int familiasDelProblemaDelMenos[] = {FAMILIA_IDENTIFICADOR, FAMILIA_LITERAL_ENTERA, FAMILIA_LITERAL_CARACTER,
+                                           FAMILIA_LITERAL_STRING, FAMILIA_SEK, FAMILIA_VOS, FAMILIA_LLAVE_DERECHA,
+                                           FAMILIA_ADDRIVAT, FAMILIA_CERRAR_RECORTAR, FAMILIA_CERRAR_CORTAR,
+                                           FAMILIA_PIPE, FAMILIA_PARENTESIS_DERECHO, FAMILIA_CORCHETE_DERECHO,
+                                           FAMILIA_LITERAL_FRACCION};
+
 char buffer[largoBuffer + 1];
 int indiceBuffer = 0;
 int filaActual = 1;
@@ -71,6 +98,7 @@ ifstream fuente;
 token *tokenAnterior;
 token *tokenBuffer;
 bool banderaErrorLexico = false;
+
 
 bool revisarExtension(const string &nombreArchivo) {
     int posicion = nombreArchivo.find_last_of(separadorExtension);
@@ -175,6 +203,10 @@ void reportarError(token *token) {
         printff(errorLiteralStringConTab, token->lexema, token->fila, token->columnaInicio);
     } else if (token->codigoError == LITERAL_STRING_MUY_LARGA) {
         printff(errorLiteralStringLarga, token->lexema, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_FRACCION_SIN_DENOMINADOR) {
+        printff(errorLiteralFraccionSinDenominador, token->lexema, token->fila, token->columnaInicio);
+    } else if (token->codigoError == LITERAL_FRACCION_MAL_FORMADA) {
+        printff(errorLiteralFraccionMalFormada, token->lexema, token->fila, token->columnaInicio);
     }
 }
 
@@ -184,6 +216,15 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
         token->asignarCodigoError(CARACTER_PERDIDO);
         token->asignarCodigoFamilia(IGNORAR_TOKEN);
         token->lexema += lexema + caracterTemporal;
+        token->ajustarInicioLexema();
+        token->asignarColumnaFin(1);
+        reportarError(token);
+        return token;
+    } else if (estadoAnterior == ESTADO_PREVIO_ERROR_CARACTER_SLASH_PERDIDO) {
+        tomeCaracter();
+        token->asignarCodigoError(CARACTER_PERDIDO);
+        token->asignarCodigoFamilia(IGNORAR_TOKEN);
+        token->lexema += lexema;
         token->ajustarInicioLexema();
         token->asignarColumnaFin(1);
         reportarError(token);
@@ -213,6 +254,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_ENTERA);
             token->asignarLexema(lexema + sufijoErrorLiteral);
             token->asignarColumnaFin(token->lexema.length());
+            token->ajustarInicioLexema();
             reportarError(token);
             return token;
         }
@@ -222,6 +264,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_CARACTER_VACIA);
+            token->ajustarInicioLexema();
             reportarError(token);
             return token;
         } else if (caracterTemporal == '\n' || caracterTemporal == '\0') {
@@ -229,6 +272,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+            token->ajustarInicioLexema();
             reportarError(token);
             return token;
         } else if (caracterTemporal == '\t') {
@@ -244,6 +288,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_CARACTER_CON_TAB);
+            token->ajustarInicioLexema();
             reportarError(token);
             if (temporal == '\n' || temporal == '\0' || temporal == ' ' || temporal == '\t') {
                 token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
@@ -260,6 +305,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+            token->ajustarInicioLexema();
             reportarError(token);
             return token;
         } else {
@@ -274,6 +320,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_CARACTER_LARGA);
+            token->ajustarInicioLexema();
             reportarError(token);
             if (temporal == '\n' || temporal == '\0' || temporal == ' ' || temporal == '\t') {
                 token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
@@ -288,6 +335,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
         token->asignarCodigoFamilia(FAMILIA_LITERAL_CARACTER);
         token->asignarColumnaFin(token->lexema.length());
         token->asignarCodigoError(LITERAL_CARACTER_SIN_CERRAR);
+        token->ajustarInicioLexema();
         reportarError(token);
         return token;
     } else if (estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_STRING ||
@@ -297,6 +345,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_STRING);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_STRING_SIN_CERRAR);
+            token->ajustarInicioLexema();
             reportarError(token);
             return token;
         } else if (caracterTemporal == '\t') {
@@ -312,6 +361,7 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
             token->asignarCodigoFamilia(FAMILIA_LITERAL_STRING);
             token->asignarColumnaFin(token->lexema.length());
             token->asignarCodigoError(LITERAL_STRING_CON_TAB);
+            token->ajustarInicioLexema();
             reportarError(token);
             if (temporal == '\n' || temporal == '\0') {
                 token->asignarCodigoError(LITERAL_STRING_SIN_CERRAR);
@@ -320,6 +370,46 @@ token *procesarErrorLexico(token *token, char caracterTemporal, int estadoAnteri
                     ajustarPuntero();
             }
             return token;
+        }
+    } else if (estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_FRACCION_PRIMERO ||
+               estadoAnterior == ESTADO_PREVIO_ERROR_LITERAL_FRACCION) {
+        if (caracterTemporal == '\t' || caracterTemporal == '\n' || caracterTemporal == ' ' ||
+            caracterTemporal == '\0') {
+            token->asignarLexema(lexema);
+            token->asignarCodigoFamilia(FAMILIA_LITERAL_FRACCION);
+            token->asignarColumnaFin(token->lexema.length());
+            token->asignarCodigoError(LITERAL_FRACCION_SIN_DENOMINADOR);
+            token->ajustarInicioLexema();
+            reportarError(token);
+        } else {
+            string sufijoErrorLiteral;
+            sufijoErrorLiteral += caracterTemporal;
+            char temporal;
+            int pasos = 2;
+            while (temporal = demeCaracter(), isalnum(temporal) || temporal == '_') {
+                sufijoErrorLiteral += temporal;
+                pasos++;
+            }
+            if (find(begin(terminadoresLiteralesLetras), end(terminadoresLiteralesLetras), sufijoErrorLiteral) !=
+                end(terminadoresLiteralesLetras)) {
+                while (pasos--) {
+                    tomeCaracter();
+                }
+                token->asignarCodigoFamilia(FAMILIA_LITERAL_STRING);
+                token->asignarLexema(lexema);
+                token->asignarColumnaFin(lexema.length());
+                token->ajustarInicioLexema();
+                return token;
+            } else {
+                tomeCaracter();
+                token->asignarCodigoError(LITERAL_FRACCION_MAL_FORMADA);
+                token->asignarCodigoFamilia(FAMILIA_LITERAL_STRING);
+                token->asignarLexema(lexema + sufijoErrorLiteral);
+                token->asignarColumnaFin(token->lexema.length());
+                token->ajustarInicioLexema();
+                reportarError(token);
+                return token;
+            }
         }
     } else {
         token->asignarCodigoError(69);
@@ -366,6 +456,11 @@ token *demeTokenAux() {
     if (caracterTemporal != '\t' && caracterTemporal != '\n' && caracterTemporal != ' ') {
         tomeCaracter();
     }
+    if (estadoActual == estadoRepararLecturaFraccion) {
+        tomeCaracter();
+        lexema.pop_back();
+        estadoActual = FAMILIA_LITERAL_ENTERA - ajuste;
+    }
     nuevoToken->asignarLexema(lexema);
     nuevoToken->asignarColumnaFin(lexema.length());
     nuevoToken->asignarCodigoFamilia(estadoActual + ajuste);
@@ -377,7 +472,7 @@ token *validarToken(token *token) {
     if (token->codigoError == 0 && token->codigoFamilia == FAMILIA_LITERAL_STRING) {
         if (!token->lexema.length() < 32) {
             int caracteres = 0;
-            for(int i = 1; i < token->lexema.length() - 1; i++){
+            for (int i = 1; i < token->lexema.length() - 1; i++) {
                 caracteres++;
                 if (token->lexema[i] == '\\')
                     i++;
@@ -401,7 +496,10 @@ token *demeToken() {
         return validarToken(actual);
     }
     token *actual = demeTokenAux();
-    if (tokenAnterior->codigoFamilia == FAMILIA_LITERAL_ENTERA && actual->codigoFamilia == FAMILIA_LITERAL_ENTERA) {
+    if (find(begin(familiasDelProblemaDelMenos), end(familiasDelProblemaDelMenos), tokenAnterior->codigoFamilia) !=
+        end(familiasDelProblemaDelMenos) &&
+        (actual->codigoFamilia == FAMILIA_LITERAL_ENTERA ||
+         actual->codigoFamilia == FAMILIA_LITERAL_FRACCION)) {
         if (actual->lexema.front() == '-') {
             token *nuevoActual = new token(actual->fila, actual->columnaInicio);
             nuevoActual->asignarColumnaFin(1);

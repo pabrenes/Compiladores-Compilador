@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <algorithm>
-#include "simboloVariable.h"
+#include "simbolos/simbolo.h"
 
 using namespace std;
 
@@ -19,7 +19,7 @@ struct tablaHash {
 
     void insertar(simbolo *simbolo);
 
-    bool buscar(string key);
+    simbolo* buscar(string key);
 
 };
 

@@ -12,7 +12,8 @@ class simboloVariable : public simbolo{
 public:
     int tipo;
 
-    simboloVariable(std::string idenfiticador, int tipo);
+    simboloVariable();
+    simboloVariable(std::string idenfiticador);
 
 };
 
