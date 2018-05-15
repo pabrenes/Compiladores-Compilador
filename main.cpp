@@ -4,76 +4,20 @@
 #include "gramaticas/Gramatica.h"
 #include "gramaticas/GTablaFollows.h"
 #include "gramaticas/nombresTerminales.h"
-#include "semantico/tablaHash.h"
 #include "semantico/erroresSemanticos.h"
-#include "semantico/simbolos/simboloConstante.h"
-#include "semantico/simbolos/simboloTipoDefinido.h"
-#include "semantico/simbolos/simboloVariable.h"
-
-#define LITERAL_ENTERO 0
-#define LITERAL_CARACTER 1
-#define LITERAL_STRING 2
-#define LITERAL_BOOLEAN 3
-#define LITERAL_CONJUNTO 4
-#define LITERAL_FRACCION 5
-
-#define TIPO_DATO_AJUSTE 47
-#define TIPO_DATO_YOROSOR 0
-#define TIPO_DATO_LIRIKH 1
-#define TIPO_DATO_LAQAT 2
-#define TIPO_DATO_AKAT 3
-#define TIPO_DATO_YANQOKH 4
-#define TIPO_DATO_KHALASSAR 5
-#define TIPO_DATO_MARILAT 6
-#define TIPO_DATO_RISSAT 7
-
-#define IDENTIFICADOR 0
-
-//Los tipos ya existentes en el lenguaje, entero, conjunto, registro, arreglo, ... son los siguientes
-#define TIPO_BASE(X) ((47 <= (X) && (X) <= 53) || (X) == 55)
 
 using namespace std;
 
-
 bool esFollow(int i, int j);
-
-int mapearTipoConstante(int familia);
-
-int mapearTipoPorFamilia(int familia);
-
-void procesarTipoDefinido(token *TA, tablaHash *tablaSimbolos);
 
 const int posicionNombreArchivo = 1;
 bool banderaErrorSintactico = false;
 bool banderaErrorSemantico = false;
 
-int tiposDeDatoPorLiteral[] = {-1,
-                               LITERAL_ENTERO,
-                               LITERAL_CARACTER,
-                               LITERAL_STRING,
-                               LITERAL_BOOLEAN,
-                               LITERAL_BOOLEAN,
-                               LITERAL_CONJUNTO};
-int tiposDeDatoPorFamilia[] = {TIPO_DATO_YOROSOR,
-                               TIPO_DATO_LIRIKH,
-                               TIPO_DATO_LAQAT,
-                               TIPO_DATO_AKAT,
-                               TIPO_DATO_YANQOKH,
-                               TIPO_DATO_KHALASSAR,
-                               TIPO_DATO_MARILAT,
-                               -1,
-                               TIPO_DATO_RISSAT};
-
-simboloConstante *constanteTemporal = new simboloConstante();
-simboloTipoDefinido *tipoDefinidoTemporal = new simboloTipoDefinido();
-simboloVariable *variableTemporal = new simboloVariable();
-string identificador;
 
 int main(int argc, char *argv[]) {
 
     iniciarScanner(argv[posicionNombreArchivo]);
-
-    tablaHash *tablaSimbolos = new tablaHash(4096);
 
     token *TA = demePrimerToken();
     stack<int> PilaParsing;
@@ -148,33 +92,7 @@ int main(int argc, char *argv[]) {
 
         } else { //simbolo semantico
             switch (EAP) {
-                case ValidarExistenciaIdentificador:
-                    if (tablaSimbolos->buscar(TA->lexema)) {
-                        printff(errorIdentificadorDuplicado, TA->lexema, TA->fila, TA->columnaInicio);
-                        banderaErrorSemantico = true;
-                    }
-                    break;
-                case PrepararSimboloConstante:
-                    delete constanteTemporal;
-                    constanteTemporal = new simboloConstante(TA->lexema);
-                    break;
-                case ActualizarSimboloConstante:
-                    constanteTemporal->tipo = mapearTipoConstante(TA->codigoFamilia);
-                    tablaSimbolos->insertar(constanteTemporal);
-                    break;
-                case PrepararSimboloTipoDefinido:
-                    delete tipoDefinidoTemporal;
-                    tipoDefinidoTemporal = new simboloTipoDefinido(TA->lexema);
-                    break;
-                case ActualizarSimboloTipoDefinido:
-                    procesarTipoDefinido(TA, tablaSimbolos);
-                    break;
-                case ValidarIdentificadorDeclarado:
-                    if (!tablaSimbolos->buscar(TA->lexema)) {
-                        printff(errorIdentificadorNoDeclarado, TA->lexema, TA->fila, TA->columnaInicio);
-                        banderaErrorSemantico = true;
-                    }
-                    break;
+
             }
         }
     }
@@ -188,7 +106,7 @@ int main(int argc, char *argv[]) {
 
     finalizarScanner();
 
-    if (banderaErrorSintactico || banderaErrorSemantico || getError())
+    if (banderaErrorSintactico || getError())
         return 0;
 
     cout << "Compilacion terminada.\n";
@@ -204,37 +122,4 @@ bool esFollow(int i, int j) {
         k++;
     }
     return result;
-}
-
-int mapearTipoConstante(int familia) {
-    if (familia == 117)
-        return LITERAL_FRACCION;
-    return tiposDeDatoPorLiteral[familia];
-}
-
-int mapearTipoPorFamilia(int familia) {
-    return tiposDeDatoPorFamilia[familia - TIPO_DATO_AJUSTE];
-}
-
-void procesarTipoDefinido(token *TA, tablaHash *tablaSimbolos) {
-    if (TIPO_BASE(TA->codigoFamilia))
-        tipoDefinidoTemporal->tipoBase = mapearTipoPorFamilia(TA->codigoFamilia);
-    if (TA->codigoFamilia == IDENTIFICADOR) {
-        simbolo *simboloTemporal = tablaSimbolos->buscar(TA->lexema);
-        if (simboloTemporal) {
-            if (simboloTemporal->clasificador == simboloTemporal->_simboloTipoDefinido) {
-                simboloTipoDefinido *simboloTipoDefinidoTemp = static_cast<simboloTipoDefinido *>(simboloTemporal);
-                tipoDefinidoTemporal->tipoBase = simboloTipoDefinidoTemp->tipoBase;
-            } else {
-                printff(errorElementoNoEsTipoDefinido, TA->lexema, TA->fila, TA->columnaInicio);
-                tipoDefinidoTemporal->tipoBase = -1;
-                banderaErrorSemantico = true;
-            }
-        } else {
-            printff(errorIdentificadorNoDeclarado, TA->lexema, TA->fila, TA->columnaInicio);
-            tipoDefinidoTemporal->tipoBase = -1;
-            banderaErrorSemantico = true;
-        }
-    }
-    tablaSimbolos->insertar(tipoDefinidoTemporal);
 }

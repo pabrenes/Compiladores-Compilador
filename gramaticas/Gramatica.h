@@ -1,7 +1,7 @@
 ﻿/*
  * Gramatica.h
  *
- * 2018/05/12 21:47:12
+ * 2018/05/13 15:14:15
  *
  * Archivo generado por GikGram 2.0
  *
@@ -21,12 +21,7 @@
 #define MAX_LADO_DER 11
 
 /* Constantes con las rutinas semánticas */
-#define ValidarExistenciaIdentificador 243
-#define PrepararSimboloConstante 244
-#define ActualizarSimboloConstante 245
-#define PrepararSimboloTipoDefinido 246
-#define ActualizarSimboloTipoDefinido 247
-#define ValidarIdentificadorDeclarado 248
+/* NO SE DETECTARON SÍMBOLOS SEMÁNTICOS EN LA GRAMÁTICA */
 
 /* Prototipos de las tablas */
 extern const int TablaParsing[124][NO_TERMINAL_INICIAL];
